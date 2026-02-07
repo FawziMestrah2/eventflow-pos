@@ -1,58 +1,112 @@
-// Product types
-export type ProductCategory = 'ticket' | 'food' | 'drink' | 'game' | 'service';
-
-export interface Product {
-  id: string;
+// Category types
+export interface Category {
+  id: number;
   name: string;
-  price: number;
-  category: ProductCategory;
+  dateCreated?: string;
+  dateModified?: string;
+}
+
+export interface CategoryView extends Category {
+  productCount: number;
+  products?: Product[];
+}
+
+// Product types
+export interface Product {
+  id: number;
+  name: string;
+  categoryId?: number;
   description?: string;
-  icon?: string;
-  stock?: number;
-  isActive: boolean;
+  unitPrice?: number;
+  retailPrice?: number;
+  dateCreated?: string;
+  dateModified?: string;
+  category?: Category;
+}
+
+export interface ProductView extends Product {
+  categoryName?: string;
 }
 
 // Cart types
 export interface CartItem {
-  product: Product;
+  product: ProductView;
   quantity: number;
 }
 
 // Sale types
 export interface Sale {
-  id: string;
-  items: SaleItem[];
-  total: number;
-  staffPin: string;
-  createdAt: string;
-  status: 'completed' | 'refunded' | 'partial_refund';
+  id: number;
+  clientId?: number;
+  employeeId?: number;
+  currencyId: number;
+  totalPrice?: number;
+  date: string;
+  salesTypeId?: number;
+  note?: string;
+  hasReturn?: boolean;
+  dateCreated?: string;
+  dateModified?: string;
 }
 
-export interface SaleItem {
-  id: string;
-  productId: string;
-  productName: string;
+export interface SaleView extends Sale {
+  itemCount: number;
+  items?: SalesItemView[];
+}
+
+export interface SalesItem {
+  id: number;
+  salesId: number;
+  productId: number;
   quantity: number;
-  unitPrice: number;
-  subtotal: number;
+  unitPrice?: number;
+  retailPrice: number;
+  totalPrice?: number;
+  discount?: number;
+  dateCreated?: string;
+  dateModified?: string;
 }
 
-// Return types
+export interface SalesItemView extends SalesItem {
+  productName?: string;
+}
+
+// Checkout request (matches BOL DTO)
+export interface SaleCreateRequest {
+  clientId?: number;
+  employeeId?: number;
+  currencyId?: number;
+  totalPrice?: number;
+  salesTypeId?: number;
+  note?: string;
+  items: SalesItemCreateRequest[];
+}
+
+export interface SalesItemCreateRequest {
+  productId: number;
+  quantity: number;
+  unitPrice?: number;
+  retailPrice: number;
+  totalPrice?: number;
+  discount?: number;
+}
+
+// Return types (for later)
 export interface ReturnRequest {
-  saleId: string;
+  saleId: number;
   items: ReturnItem[];
   reason?: string;
   staffPin: string;
 }
 
 export interface ReturnItem {
-  saleItemId: string;
+  saleItemId: number;
   quantity: number;
 }
 
 export interface ReturnRecord {
-  id: string;
-  saleId: string;
+  id: number;
+  saleId: number;
   items: ReturnItem[];
   total: number;
   reason?: string;
@@ -72,7 +126,7 @@ export interface DailyReport {
 }
 
 export interface CategorySummary {
-  category: ProductCategory;
+  category: string;
   itemsSold: number;
   revenue: number;
 }
@@ -84,9 +138,5 @@ export interface Staff {
   role: 'cashier' | 'manager';
 }
 
-// API Response types
-export interface ApiResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-}
+// Legacy type alias for backward compatibility
+export type ProductCategory = string;

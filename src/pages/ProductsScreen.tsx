@@ -1,33 +1,51 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockProducts } from '@/data/mockData';
-import { categories, categoryConfig, formatPrice } from '@/lib/constants';
-import type { ProductCategory } from '@/types';
-import { ArrowLeft, Package, Search } from 'lucide-react';
+import { productsApi, categoriesApi } from '@/services/api';
+import { getCategoryStyle, formatPrice } from '@/lib/constants';
+import { ArrowLeft, Package, Search, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ProductsScreen = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<ProductCategory | 'all'>('all');
+  const [activeCategoryId, setActiveCategoryId] = useState<string>('all');
 
-  const filteredProducts = mockProducts.filter((product) => {
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: productsApi.getAllDetails,
+  });
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: categoriesApi.getAllDetails,
+  });
+
+  const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || product.category === activeCategory;
+    const matchesCategory = activeCategoryId === 'all' || product.categoryId?.toString() === activeCategoryId;
     return matchesSearch && matchesCategory;
   });
+
+  if (productsLoading || categoriesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -67,15 +85,16 @@ const ProductsScreen = () => {
             <CardTitle>All Products ({filteredProducts.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as ProductCategory | 'all')}>
+            <Tabs value={activeCategoryId} onValueChange={setActiveCategoryId}>
               <TabsList className="mb-4">
                 <TabsTrigger value="all">All</TabsTrigger>
                 {categories.map((category) => {
-                  const config = categoryConfig[category];
+                  const style = getCategoryStyle(category.name);
+                  const Icon = style.icon;
                   return (
-                    <TabsTrigger key={category} value={category}>
-                      <config.icon className="h-4 w-4 mr-2" />
-                      {config.label}
+                    <TabsTrigger key={category.id} value={category.id.toString()}>
+                      <Icon className="h-4 w-4 mr-2" />
+                      {category.name}
                     </TabsTrigger>
                   );
                 })}
@@ -87,37 +106,32 @@ const ProductsScreen = () => {
                     <TableHead>Product</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map((product) => {
-                    const config = categoryConfig[product.category];
+                    const style = getCategoryStyle(product.categoryName);
+                    const Icon = style.icon;
                     return (
                       <TableRow key={product.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${config.bgClass}/20`}>
-                              <config.icon className={`h-5 w-5 ${config.colorClass}`} />
+                            <div className={`p-2 rounded-lg ${style.bgClass}/20`}>
+                              <Icon className={`h-5 w-5 ${style.colorClass}`} />
                             </div>
                             <div>
                               <p className="font-medium">{product.name}</p>
-                              <p className="text-sm text-muted-foreground">{product.id}</p>
+                              <p className="text-sm text-muted-foreground">ID: {product.id}</p>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={config.colorClass}>
-                            {config.label}
+                          <Badge variant="outline" className={style.colorClass}>
+                            {product.categoryName || 'Uncategorized'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {formatPrice(product.price)}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={product.isActive ? 'default' : 'secondary'}>
-                            {product.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
+                          {formatPrice(product.retailPrice)}
                         </TableCell>
                       </TableRow>
                     );

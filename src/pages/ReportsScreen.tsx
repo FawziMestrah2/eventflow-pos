@@ -1,24 +1,25 @@
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { mockDailyReport } from '@/data/mockData';
-import { categoryConfig, formatPrice } from '@/lib/constants';
-import { 
-  ArrowLeft, 
-  BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
+import { salesApi } from '@/services/api';
+import { getCategoryStyle, formatPrice } from '@/lib/constants';
+import {
+  ArrowLeft,
+  BarChart3,
+  TrendingUp,
   DollarSign,
   ShoppingCart,
-  RotateCcw 
+  RotateCcw,
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -26,23 +27,38 @@ import {
 } from 'recharts';
 
 const COLORS = [
-  'hsl(16, 90%, 55%)',   // tickets - orange
-  'hsl(45, 95%, 55%)',   // food - yellow
-  'hsl(175, 65%, 45%)',  // drinks - teal
-  'hsl(340, 75%, 65%)',  // games - pink
-  'hsl(260, 60%, 60%)',  // services - purple
+  'hsl(16, 90%, 55%)',   // orange
+  'hsl(45, 95%, 55%)',   // yellow
+  'hsl(175, 65%, 45%)',  // teal
+  'hsl(340, 75%, 65%)',  // pink
+  'hsl(260, 60%, 60%)',  // purple
 ];
 
 const ReportsScreen = () => {
   const navigate = useNavigate();
-  const report = mockDailyReport;
 
-  const chartData = report.byCategory.map((cat) => ({
-    name: categoryConfig[cat.category].label,
-    revenue: cat.revenue,
-    items: cat.itemsSold,
-    category: cat.category,
-  }));
+  const { data: todaySales = [], isLoading } = useQuery({
+    queryKey: ['todaySales'],
+    queryFn: salesApi.getToday,
+  });
+
+  // Calculate report data from today's sales
+  const totalRevenue = todaySales.reduce((sum, sale) => sum + (sale.totalPrice || 0), 0);
+  const totalSales = todaySales.length;
+  const totalItems = todaySales.reduce((sum, sale) => sum + (sale.itemCount || 0), 0);
+
+  // Group by category (simplified - you might want to enhance this)
+  const chartData = [
+    { name: 'Sales', revenue: totalRevenue, items: totalItems },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -69,7 +85,7 @@ const ReportsScreen = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Revenue</p>
-                  <p className="text-2xl font-bold">{formatPrice(report.totalRevenue)}</p>
+                  <p className="text-2xl font-bold">{formatPrice(totalRevenue)}</p>
                 </div>
               </div>
             </CardContent>
@@ -83,7 +99,7 @@ const ReportsScreen = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Net Revenue</p>
-                  <p className="text-2xl font-bold text-success">{formatPrice(report.netRevenue)}</p>
+                  <p className="text-2xl font-bold text-success">{formatPrice(totalRevenue)}</p>
                 </div>
               </div>
             </CardContent>
@@ -97,7 +113,7 @@ const ReportsScreen = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Sales</p>
-                  <p className="text-2xl font-bold">{report.totalSales}</p>
+                  <p className="text-2xl font-bold">{totalSales}</p>
                 </div>
               </div>
             </CardContent>
@@ -110,103 +126,45 @@ const ReportsScreen = () => {
                   <RotateCcw className="h-6 w-6 text-destructive" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Returns</p>
-                  <p className="text-2xl font-bold">{report.totalReturns} ({formatPrice(report.returnAmount)})</p>
+                  <p className="text-sm text-muted-foreground">Items Sold</p>
+                  <p className="text-2xl font-bold">{totalItems}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Revenue by Category */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue by Category</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="name" className="text-sm" />
-                    <YAxis className="text-sm" />
-                    <Tooltip 
-                      formatter={(value: number) => formatPrice(value)}
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))',
-                        borderColor: 'hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Items Sold Distribution */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Items Sold Distribution</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="items"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Category Breakdown */}
+        {/* Sales List */}
         <Card>
           <CardHeader>
-            <CardTitle>Category Breakdown</CardTitle>
+            <CardTitle>Today's Sales ({todaySales.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              {report.byCategory.map((cat, index) => {
-                const config = categoryConfig[cat.category];
-                return (
+            {todaySales.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No sales today yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {todaySales.map((sale) => (
                   <div
-                    key={cat.category}
-                    className="p-4 rounded-lg border-2"
-                    style={{ borderColor: COLORS[index] }}
+                    key={sale.id}
+                    className="flex items-center justify-between p-4 rounded-lg border"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <config.icon className="h-5 w-5" style={{ color: COLORS[index] }} />
-                      <span className="font-semibold">{config.label}</span>
+                    <div>
+                      <p className="font-medium">Sale #{sale.id}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {sale.itemCount} items
+                      </p>
                     </div>
-                    <p className="text-2xl font-bold">{formatPrice(cat.revenue)}</p>
-                    <p className="text-sm text-muted-foreground">{cat.itemsSold} items sold</p>
+                    <p className="text-lg font-bold text-primary">
+                      {formatPrice(sale.totalPrice)}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

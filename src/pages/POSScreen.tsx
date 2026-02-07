@@ -1,44 +1,51 @@
 import { useState, useCallback } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import ProductGrid from '@/components/ProductGrid';
 import CartPanel from '@/components/CartPanel';
 import Receipt from '@/components/Receipt';
 import { useCartStore, useAuthStore } from '@/stores/useStore';
+import { salesApi } from '@/services/api';
 import { Button } from '@/components/ui/button';
-import type { Sale } from '@/types';
-import { LogOut, RotateCcw, BarChart3, Package } from 'lucide-react';
+import type { SaleView, SaleCreateRequest } from '@/types';
+import { LogOut, RotateCcw, BarChart3, Package, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const POSScreen = () => {
-  const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+  const [completedSale, setCompletedSale] = useState<SaleView | null>(null);
   const { items, clearCart, getTotal } = useCartStore();
   const { staff, logout } = useAuthStore();
   const navigate = useNavigate();
 
+  // Checkout mutation
+  const checkoutMutation = useMutation({
+    mutationFn: salesApi.checkout,
+    onSuccess: (sale) => {
+      setCompletedSale(sale);
+      toast.success('Sale completed successfully!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Checkout failed: ${error.message}`);
+    },
+  });
+
   const handleCheckout = useCallback(() => {
     if (items.length === 0) return;
 
-    // Create sale object (mock - would be API call in production)
-    const sale: Sale = {
-      id: `SALE-${Date.now().toString(36).toUpperCase()}`,
-      items: items.map((item, index) => ({
-        id: `si-${index}`,
+    const request: SaleCreateRequest = {
+      employeeId: staff ? parseInt(staff.pin) : undefined,
+      totalPrice: getTotal(),
+      items: items.map((item) => ({
         productId: item.product.id,
-        productName: item.product.name,
         quantity: item.quantity,
-        unitPrice: item.product.price,
-        subtotal: item.product.price * item.quantity,
+        unitPrice: item.product.unitPrice || item.product.retailPrice || 0,
+        retailPrice: item.product.retailPrice || 0,
+        totalPrice: (item.product.retailPrice || 0) * item.quantity,
       })),
-      total: getTotal(),
-      staffPin: staff?.pin || '',
-      createdAt: new Date().toISOString(),
-      status: 'completed',
     };
 
-    // In production, this would call: salesApi.create(...)
-    setCompletedSale(sale);
-    toast.success('Sale completed successfully!');
-  }, [items, getTotal, staff]);
+    checkoutMutation.mutate(request);
+  }, [items, getTotal, staff, checkoutMutation]);
 
   const handleReceiptClose = useCallback(() => {
     setCompletedSale(null);
@@ -55,7 +62,7 @@ const POSScreen = () => {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b bg-card shadow-sm">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-primary">🎪 Kermesse POS</h1>
+          <h1 className="text-xl font-bold text-primary">Kermesse POS</h1>
           {staff && (
             <span className="text-sm text-muted-foreground">
               Welcome, <span className="font-semibold">{staff.name}</span>
@@ -92,7 +99,10 @@ const POSScreen = () => {
 
         {/* Cart Panel - 30% */}
         <div className="flex-[3] p-4 pl-0 min-w-[320px]">
-          <CartPanel onCheckout={handleCheckout} />
+          <CartPanel
+            onCheckout={handleCheckout}
+            isLoading={checkoutMutation.isPending}
+          />
         </div>
       </main>
 

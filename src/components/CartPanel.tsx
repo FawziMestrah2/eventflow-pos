@@ -3,14 +3,15 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCartStore } from '@/stores/useStore';
-import { formatPrice } from '@/lib/constants';
-import { Minus, Plus, Trash2, ShoppingCart, CreditCard } from 'lucide-react';
+import { formatPrice, formatPriceLBP } from '@/lib/constants';
+import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Loader2 } from 'lucide-react';
 
 interface CartPanelProps {
   onCheckout: () => void;
+  isLoading?: boolean;
 }
 
-const CartPanel = ({ onCheckout }: CartPanelProps) => {
+const CartPanel = ({ onCheckout, isLoading = false }: CartPanelProps) => {
   const { items, updateQuantity, removeItem, clearCart, getTotal, getItemCount } = useCartStore();
   const total = getTotal();
   const itemCount = getItemCount();
@@ -47,7 +48,7 @@ const CartPanel = ({ onCheckout }: CartPanelProps) => {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{item.product.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatPrice(item.product.price)} each
+                      {formatPrice(item.product.retailPrice)} each
                     </p>
                   </div>
 
@@ -57,6 +58,7 @@ const CartPanel = ({ onCheckout }: CartPanelProps) => {
                       variant="outline"
                       className="h-8 w-8"
                       onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                      disabled={isLoading}
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
@@ -66,13 +68,16 @@ const CartPanel = ({ onCheckout }: CartPanelProps) => {
                       variant="outline"
                       className="h-8 w-8"
                       onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                      disabled={isLoading}
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
 
                   <div className="text-right min-w-[70px]">
-                    <p className="font-semibold">{formatPrice(item.product.price * item.quantity)}</p>
+                    <p className="font-semibold">
+                      {formatPrice((item.product.retailPrice || 0) * item.quantity)}
+                    </p>
                   </div>
 
                   <Button
@@ -80,6 +85,7 @@ const CartPanel = ({ onCheckout }: CartPanelProps) => {
                     variant="ghost"
                     className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => removeItem(item.product.id)}
+                    disabled={isLoading}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -93,9 +99,12 @@ const CartPanel = ({ onCheckout }: CartPanelProps) => {
       <CardFooter className="flex-col gap-4 border-t pt-4">
         <div className="w-full space-y-2">
           <Separator />
-          <div className="flex justify-between items-center text-xl font-bold">
-            <span>Total</span>
-            <span className="text-primary">{formatPrice(total)}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold">Total</span>
+            <div className="text-right">
+              <p className="text-xl font-bold text-primary">{formatPrice(total)}</p>
+              <p className="text-sm text-muted-foreground">{formatPriceLBP(total)}</p>
+            </div>
           </div>
         </div>
 
@@ -104,7 +113,7 @@ const CartPanel = ({ onCheckout }: CartPanelProps) => {
             variant="outline"
             className="touch-target"
             onClick={clearCart}
-            disabled={items.length === 0}
+            disabled={items.length === 0 || isLoading}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Clear
@@ -112,10 +121,14 @@ const CartPanel = ({ onCheckout }: CartPanelProps) => {
           <Button
             className="touch-target"
             onClick={onCheckout}
-            disabled={items.length === 0}
+            disabled={items.length === 0 || isLoading}
           >
-            <CreditCard className="h-4 w-4 mr-2" />
-            Checkout
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <CreditCard className="h-4 w-4 mr-2" />
+            )}
+            {isLoading ? 'Processing...' : 'Checkout'}
           </Button>
         </div>
       </CardFooter>

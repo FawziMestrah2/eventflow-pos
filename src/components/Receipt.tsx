@@ -2,12 +2,12 @@ import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import type { Sale } from '@/types';
-import { formatPrice, formatDateTime } from '@/lib/constants';
+import type { SaleView } from '@/types';
+import { formatPrice, formatPriceLBP, formatDateTime } from '@/lib/constants';
 import { Printer, Check, PartyPopper } from 'lucide-react';
 
 interface ReceiptProps {
-  sale: Sale;
+  sale: SaleView;
   onClose: () => void;
   onPrint: () => void;
 }
@@ -36,9 +36,15 @@ const Receipt = ({ sale, onClose, onPrint }: ReceiptProps) => {
           {/* Printable Receipt */}
           <div ref={receiptRef} className="print-receipt bg-card p-4 rounded-lg border">
             <div className="text-center mb-4">
-              <PartyPopper className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <h3 className="font-bold text-lg">Kermesse Festival</h3>
-              <p className="text-sm text-muted-foreground">Thank you for your purchase!</p>
+              {/* <PartyPopper className="h-8 w-8 mx-auto mb-2 text-primary" /> */}
+              <img
+                src="/PrintLogo.png"
+                alt="Logo"
+                className="h-16 w-16 mx-auto mb-2 object-contain"
+              />
+
+              {/* <h3 className="font-bold text-lg">الاحتفال </h3> */}
+              <p className="text-sm text-muted-foreground">شكرا لمشاركتك!</p>
             </div>
 
             <Separator className="my-3" />
@@ -50,32 +56,48 @@ const Receipt = ({ sale, onClose, onPrint }: ReceiptProps) => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Date:</span>
-                <span>{formatDateTime(sale.createdAt)}</span>
+                <span>{formatDateTime(sale.date)}</span>
               </div>
             </div>
 
             <Separator className="my-3" />
 
-            <div className="space-y-2">
-              {sale.items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span>
-                    {item.quantity}x {item.productName}
-                  </span>
-                  <span>{formatPrice(item.subtotal)}</span>
-                </div>
-              ))}
-            </div>
+            {/* Items Table */}
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-center py-1 w-12 pr-4">Qty</th>
+                  <th className="text-left py-1 pl-4">Item</th>
+                  <th className="text-right py-1">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sale.items?.map((item) => (
+                  <tr key={item.id}>
+                    <td className="py-1 text-center pr-4">{item.quantity}</td>
+                    <td className="py-1 pl-4">{item.productName || `Product #${item.productId}`}</td>
+                    <td className="py-1 text-right">{formatPrice(item.totalPrice)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
             <Separator className="my-3" />
 
-            <div className="flex justify-between font-bold text-lg">
-              <span>TOTAL</span>
-              <span className="text-primary">{formatPrice(sale.total)}</span>
+            <div className="space-y-1">
+              <div className="flex justify-between font-bold text-lg">
+                <span>TOTAL</span>
+                <span className="text-primary">{formatPrice(sale.totalPrice)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span></span>
+                <span>{formatPriceLBP(sale.totalPrice)}</span>
+              </div>
             </div>
 
             <div className="text-center mt-4 text-sm text-muted-foreground">
-              <p>Enjoy the festival! 🎪</p>
+              <p>حظا سعيدا!</p>
+              {/* <p className="text-xs mt-1">Rate: $1 = 90,000 L.L.</p> */}
             </div>
           </div>
 

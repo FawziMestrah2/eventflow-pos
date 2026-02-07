@@ -131,20 +131,45 @@
 
 /* Print styles for receipts */
 @media print {
+  /* Remove browser header/footer */
+  @page {
+    margin: 0;
+    size: 80mm auto;
+  }
+
+  /* Hide everything except receipt */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
   body * {
     visibility: hidden;
   }
-  
+
   .print-receipt,
   .print-receipt * {
     visibility: visible;
   }
-  
+
   .print-receipt {
     position: absolute;
     left: 0;
     top: 0;
     width: 80mm;
-    padding: 10mm;
+    padding: 5mm;
+    margin: 0;
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ensure text is readable in print */
+  .print-receipt p,
+  .print-receipt span,
+  .print-receipt h3,
+  .print-receipt div {
+    color: black !important;
   }
 }

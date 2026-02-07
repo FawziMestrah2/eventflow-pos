@@ -1,58 +1,125 @@
-import type { ProductCategory } from '@/types';
-import { 
-  Ticket, 
-  UtensilsCrossed, 
-  Wine, 
-  Gamepad2, 
+import {
+  Ticket,
+  UtensilsCrossed,
+  Wine,
+  Gamepad2,
   Sparkles,
+  Package,
   LucideIcon
 } from 'lucide-react';
 
-export const categoryConfig: Record<ProductCategory, { 
-  label: string; 
-  icon: LucideIcon; 
+// Currency configuration
+export const currencies = {
+  USD: {
+    code: 'USD',
+    symbol: '$',
+    name: 'US Dollar',
+    rate: 1, // Base currency
+  },
+  LBP: {
+    code: 'LBP',
+    symbol: 'L.L.',
+    name: 'Lebanese Pound',
+    rate: 90000, // 1 USD = 90,000 LBP
+  },
+} as const;
+
+export type CurrencyCode = keyof typeof currencies;
+
+// Format price in USD
+export const formatPrice = (price?: number | null): string => {
+  return `$${(price || 0).toFixed(2)}`;
+};
+
+// Format price in LBP
+export const formatPriceLBP = (price?: number | null): string => {
+  const lbpAmount = (price || 0) * currencies.LBP.rate;
+  return `${lbpAmount.toLocaleString('en-US')} L.L.`;
+};
+
+// Format price in both currencies
+export const formatPriceDual = (price?: number | null): { usd: string; lbp: string } => {
+  return {
+    usd: formatPrice(price),
+    lbp: formatPriceLBP(price),
+  };
+};
+
+// Convert USD to LBP
+export const usdToLbp = (usd: number): number => {
+  return usd * currencies.LBP.rate;
+};
+
+// Convert LBP to USD
+export const lbpToUsd = (lbp: number): number => {
+  return lbp / currencies.LBP.rate;
+};
+
+// Category styling config - maps category names (case-insensitive) to styles
+export const categoryStyleConfig: Record<string, {
+  icon: LucideIcon;
   colorClass: string;
   bgClass: string;
 }> = {
-  ticket: { 
-    label: 'Tickets', 
-    icon: Ticket, 
+  tickets: {
+    icon: Ticket,
     colorClass: 'text-category-tickets',
     bgClass: 'bg-category-tickets'
   },
-  food: { 
-    label: 'Food', 
-    icon: UtensilsCrossed, 
+  ticket: {
+    icon: Ticket,
+    colorClass: 'text-category-tickets',
+    bgClass: 'bg-category-tickets'
+  },
+  food: {
+    icon: UtensilsCrossed,
     colorClass: 'text-category-food',
     bgClass: 'bg-category-food'
   },
-  drink: { 
-    label: 'Drinks', 
-    icon: Wine, 
+  drinks: {
+    icon: Wine,
     colorClass: 'text-category-drinks',
     bgClass: 'bg-category-drinks'
   },
-  game: { 
-    label: 'Games', 
-    icon: Gamepad2, 
+  drink: {
+    icon: Wine,
+    colorClass: 'text-category-drinks',
+    bgClass: 'bg-category-drinks'
+  },
+  games: {
+    icon: Gamepad2,
     colorClass: 'text-category-games',
     bgClass: 'bg-category-games'
   },
-  service: { 
-    label: 'Services', 
-    icon: Sparkles, 
+  game: {
+    icon: Gamepad2,
+    colorClass: 'text-category-games',
+    bgClass: 'bg-category-games'
+  },
+  services: {
+    icon: Sparkles,
+    colorClass: 'text-category-services',
+    bgClass: 'bg-category-services'
+  },
+  service: {
+    icon: Sparkles,
     colorClass: 'text-category-services',
     bgClass: 'bg-category-services'
   },
 };
 
-export const categories: ProductCategory[] = ['ticket', 'food', 'drink', 'game', 'service'];
+// Default style for unknown categories
+export const defaultCategoryStyle = {
+  icon: Package,
+  colorClass: 'text-primary',
+  bgClass: 'bg-primary'
+};
 
-export const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(price);
+// Helper function to get category style by name
+export const getCategoryStyle = (categoryName?: string | null) => {
+  if (!categoryName) return defaultCategoryStyle;
+  const key = categoryName.toLowerCase();
+  return categoryStyleConfig[key] || defaultCategoryStyle;
 };
 
 export const formatDateTime = (date: string | Date): string => {

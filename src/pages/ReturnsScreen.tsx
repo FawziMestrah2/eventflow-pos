@@ -1,50 +1,58 @@
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice, formatDateTime } from '@/lib/constants';
-import { mockSales } from '@/data/mockData';
-import type { Sale, SaleItem } from '@/types';
-import { Search, RotateCcw, ArrowLeft, Check, AlertTriangle } from 'lucide-react';
+import { salesApi } from '@/services/api';
+import type { SaleView, SalesItemView } from '@/types';
+import { Search, RotateCcw, ArrowLeft, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const ReturnsScreen = () => {
   const navigate = useNavigate();
   const [saleId, setSaleId] = useState('');
-  const [foundSale, setFoundSale] = useState<Sale | null>(null);
-  const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
+  const [foundSale, setFoundSale] = useState<SaleView | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Map<number, number>>(new Map());
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!saleId.trim()) {
       toast.error('Please enter a Sale ID');
       return;
     }
 
-    // Mock search - replace with API call
-    const sale = mockSales.find((s) => s.id.toLowerCase() === saleId.toLowerCase());
-    
-    if (sale) {
-      setFoundSale(sale);
-      setSelectedItems(new Map());
-    } else {
+    setIsSearching(true);
+    try {
+      const sale = await salesApi.getDetailsById(parseInt(saleId));
+      if (sale) {
+        setFoundSale(sale);
+        setSelectedItems(new Map());
+      } else {
+        toast.error('Sale not found. Please check the ID.');
+        setFoundSale(null);
+      }
+    } catch (error) {
       toast.error('Sale not found. Please check the ID.');
       setFoundSale(null);
+    } finally {
+      setIsSearching(false);
     }
   };
 
-  const toggleItem = (item: SaleItem) => {
+  const toggleItem = (item: SalesItemView) => {
     const newSelected = new Map(selectedItems);
     if (newSelected.has(item.id)) {
       newSelected.delete(item.id);
@@ -54,7 +62,7 @@ const ReturnsScreen = () => {
     setSelectedItems(newSelected);
   };
 
-  const updateReturnQuantity = (itemId: string, quantity: number, maxQty: number) => {
+  const updateReturnQuantity = (itemId: number, quantity: number, maxQty: number) => {
     const newSelected = new Map(selectedItems);
     if (quantity <= 0) {
       newSelected.delete(itemId);
@@ -65,12 +73,12 @@ const ReturnsScreen = () => {
   };
 
   const calculateRefund = () => {
-    if (!foundSale) return 0;
+    if (!foundSale || !foundSale.items) return 0;
     let total = 0;
     selectedItems.forEach((qty, itemId) => {
-      const item = foundSale.items.find((i) => i.id === itemId);
+      const item = foundSale.items?.find((i) => i.id === itemId);
       if (item) {
-        total += item.unitPrice * qty;
+        total += (item.unitPrice || item.retailPrice) * qty;
       }
     });
     return total;
@@ -83,9 +91,9 @@ const ReturnsScreen = () => {
     }
 
     setIsProcessing(true);
-    // Mock API call
+    // TODO: Call returns API when implemented
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
+
     toast.success(`Return processed! Refund: ${formatPrice(calculateRefund())}`);
     setFoundSale(null);
     setSaleId('');
@@ -119,16 +127,22 @@ const ReturnsScreen = () => {
                 <Label htmlFor="saleId" className="sr-only">Sale ID</Label>
                 <Input
                   id="saleId"
-                  placeholder="Enter Sale ID (e.g., sale-001)"
+                  placeholder="Enter Sale ID (e.g., 1, 2, 3...)"
                   value={saleId}
                   onChange={(e) => setSaleId(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   className="h-12"
                 />
               </div>
-              <Button onClick={handleSearch} className="h-12 px-6 touch-target">
-                <Search className="h-4 w-4 mr-2" />
-                Search
+              <Button onClick={handleSearch} className="h-12 px-6 touch-target" disabled={isSearching}>
+                {isSearching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Search className="h-4 w-4 mr-2" />
+                    Search
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>
@@ -140,14 +154,14 @@ const ReturnsScreen = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Sale Details</CardTitle>
-                <Badge variant={foundSale.status === 'completed' ? 'default' : 'secondary'}>
-                  {foundSale.status}
+                <Badge variant={foundSale.hasReturn ? 'secondary' : 'default'}>
+                  {foundSale.hasReturn ? 'Has Returns' : 'Completed'}
                 </Badge>
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>Sale ID: {foundSale.id}</p>
-                <p>Date: {formatDateTime(foundSale.createdAt)}</p>
-                <p>Total: {formatPrice(foundSale.total)}</p>
+                <p>Date: {formatDateTime(foundSale.date)}</p>
+                <p>Total: {formatPrice(foundSale.totalPrice)}</p>
               </div>
             </CardHeader>
             <CardContent>
@@ -163,10 +177,10 @@ const ReturnsScreen = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {foundSale.items.map((item) => {
+                  {foundSale.items?.map((item) => {
                     const isSelected = selectedItems.has(item.id);
                     const returnQty = selectedItems.get(item.id) || 0;
-                    
+
                     return (
                       <TableRow key={item.id} className={isSelected ? 'bg-primary/5' : ''}>
                         <TableCell>
@@ -177,7 +191,9 @@ const ReturnsScreen = () => {
                             className="h-5 w-5 rounded border-primary"
                           />
                         </TableCell>
-                        <TableCell className="font-medium">{item.productName}</TableCell>
+                        <TableCell className="font-medium">
+                          {item.productName || `Product #${item.productId}`}
+                        </TableCell>
                         <TableCell className="text-center">{item.quantity}</TableCell>
                         <TableCell className="text-center">
                           {isSelected && (
@@ -186,16 +202,18 @@ const ReturnsScreen = () => {
                               min={1}
                               max={item.quantity}
                               value={returnQty}
-                              onChange={(e) => 
+                              onChange={(e) =>
                                 updateReturnQuantity(item.id, parseInt(e.target.value) || 0, item.quantity)
                               }
                               className="w-20 mx-auto h-8 text-center"
                             />
                           )}
                         </TableCell>
-                        <TableCell className="text-right">{formatPrice(item.unitPrice)}</TableCell>
+                        <TableCell className="text-right">
+                          {formatPrice(item.unitPrice || item.retailPrice)}
+                        </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {isSelected ? formatPrice(item.unitPrice * returnQty) : '-'}
+                          {isSelected ? formatPrice((item.unitPrice || item.retailPrice) * returnQty) : '-'}
                         </TableCell>
                       </TableRow>
                     );
@@ -218,13 +236,13 @@ const ReturnsScreen = () => {
                     </div>
                   </div>
 
-                  <Button 
-                    onClick={handleProcessReturn} 
+                  <Button
+                    onClick={handleProcessReturn}
                     className="w-full h-12 touch-target"
                     disabled={isProcessing}
                   >
                     {isProcessing ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground border-t-transparent" />
+                      <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
                       <>
                         <Check className="h-4 w-4 mr-2" />

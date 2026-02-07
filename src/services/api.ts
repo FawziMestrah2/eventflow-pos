@@ -1,16 +1,18 @@
 import axios from 'axios';
-import type { 
-  Product, 
-  Sale, 
-  SaleItem, 
-  ReturnRequest, 
-  ReturnRecord, 
-  DailyReport,
-  ApiResponse 
+import type {
+  Product,
+  ProductView,
+  Category,
+  CategoryView,
+  SaleView,
+  SaleCreateRequest,
+  ReturnRequest,
+  ReturnRecord,
+  DailyReport
 } from '@/types';
 
-// Configure your API base URL here
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Configure your API base URL here - point to your .NET API
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7117/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -28,74 +30,157 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Categories API
+export const categoriesApi = {
+  getAll: async (): Promise<Category[]> => {
+    const response = await apiClient.get<Category[]>('/category');
+    return response.data;
+  },
+
+  getAllDetails: async (): Promise<CategoryView[]> => {
+    const response = await apiClient.get<CategoryView[]>('/category/GetDetails');
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<Category> => {
+    const response = await apiClient.get<Category>(`/category/${id}`);
+    return response.data;
+  },
+
+  getDetailsById: async (id: number): Promise<CategoryView> => {
+    const response = await apiClient.get<CategoryView>(`/category/GetDetailsById/${id}`);
+    return response.data;
+  },
+
+  create: async (data: Partial<Category>): Promise<Category> => {
+    const response = await apiClient.post<Category>('/category', data);
+    return response.data;
+  },
+
+  update: async (data: Category): Promise<Category> => {
+    const response = await apiClient.put<Category>('/category', data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/category/${id}`);
+  },
+};
+
 // Products API
 export const productsApi = {
   getAll: async (): Promise<Product[]> => {
-    const response = await apiClient.get<ApiResponse<Product[]>>('/products');
-    return response.data.data;
+    const response = await apiClient.get<Product[]>('/product');
+    return response.data;
   },
 
-  getByCategory: async (category: string): Promise<Product[]> => {
-    const response = await apiClient.get<ApiResponse<Product[]>>(`/products?category=${category}`);
-    return response.data.data;
+  getAllDetails: async (): Promise<ProductView[]> => {
+    const response = await apiClient.get<ProductView[]>('/product/GetDetails');
+    return response.data;
   },
 
-  getById: async (id: string): Promise<Product> => {
-    const response = await apiClient.get<ApiResponse<Product>>(`/products/${id}`);
-    return response.data.data;
+  getById: async (id: number): Promise<Product> => {
+    const response = await apiClient.get<Product>(`/product/${id}`);
+    return response.data;
+  },
+
+  getDetailsById: async (id: number): Promise<ProductView> => {
+    const response = await apiClient.get<ProductView>(`/product/GetDetailsById/${id}`);
+    return response.data;
+  },
+
+  create: async (data: Partial<Product>): Promise<Product> => {
+    const response = await apiClient.post<Product>('/product', data);
+    return response.data;
+  },
+
+  update: async (data: Product): Promise<Product> => {
+    const response = await apiClient.put<Product>('/product', data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/product/${id}`);
   },
 };
 
 // Sales API
 export const salesApi = {
-  create: async (data: { items: { productId: string; quantity: number; unitPrice: number }[]; staffPin: string }): Promise<Sale> => {
-    const response = await apiClient.post<ApiResponse<Sale>>('/sales', data);
-    return response.data.data;
+  getAll: async (): Promise<SaleView[]> => {
+    const response = await apiClient.get<SaleView[]>('/sale');
+    return response.data;
   },
 
-  getById: async (id: string): Promise<Sale> => {
-    const response = await apiClient.get<ApiResponse<Sale>>(`/sales/${id}`);
-    return response.data.data;
+  getAllDetails: async (): Promise<SaleView[]> => {
+    const response = await apiClient.get<SaleView[]>('/sale/GetDetails');
+    return response.data;
   },
 
-  addItems: async (saleId: string, items: Partial<SaleItem>[]): Promise<Sale> => {
-    const response = await apiClient.post<ApiResponse<Sale>>(`/sales/${saleId}/items`, { items });
-    return response.data.data;
+  getById: async (id: number): Promise<SaleView> => {
+    const response = await apiClient.get<SaleView>(`/sale/${id}`);
+    return response.data;
+  },
+
+  getDetailsById: async (id: number): Promise<SaleView> => {
+    const response = await apiClient.get<SaleView>(`/sale/GetDetailsById/${id}`);
+    return response.data;
+  },
+
+  // Main checkout endpoint - creates sale with items in one call
+  checkout: async (data: SaleCreateRequest): Promise<SaleView> => {
+    const response = await apiClient.post<SaleView>('/sale/Checkout', data);
+    return response.data;
+  },
+
+  // Get today's sales
+  getToday: async (): Promise<SaleView[]> => {
+    const response = await apiClient.get<SaleView[]>('/sale/Today');
+    return response.data;
+  },
+
+  // Get sales by date range
+  getByDateRange: async (startDate: string, endDate: string): Promise<SaleView[]> => {
+    const response = await apiClient.get<SaleView[]>(`/sale/ByDate?startDate=${startDate}&endDate=${endDate}`);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/sale/${id}`);
   },
 };
 
-// Returns API
+// Returns API (placeholder for later)
 export const returnsApi = {
   create: async (data: ReturnRequest): Promise<ReturnRecord> => {
-    const response = await apiClient.post<ApiResponse<ReturnRecord>>('/returns', data);
-    return response.data.data;
+    const response = await apiClient.post<ReturnRecord>('/return', data);
+    return response.data;
   },
 
-  getBySaleId: async (saleId: string): Promise<ReturnRecord[]> => {
-    const response = await apiClient.get<ApiResponse<ReturnRecord[]>>(`/returns?saleId=${saleId}`);
-    return response.data.data;
+  getBySaleId: async (saleId: number): Promise<ReturnRecord[]> => {
+    const response = await apiClient.get<ReturnRecord[]>(`/return?saleId=${saleId}`);
+    return response.data;
   },
 };
 
-// Reports API
+// Reports API (you may need to create this in .NET)
 export const reportsApi = {
   getDaily: async (date?: string): Promise<DailyReport> => {
     const queryDate = date || new Date().toISOString().split('T')[0];
-    const response = await apiClient.get<ApiResponse<DailyReport>>(`/reports/daily?date=${queryDate}`);
-    return response.data.data;
+    const response = await apiClient.get<DailyReport>(`/report/daily?date=${queryDate}`);
+    return response.data;
   },
 
   getRange: async (startDate: string, endDate: string): Promise<DailyReport[]> => {
-    const response = await apiClient.get<ApiResponse<DailyReport[]>>(`/reports?start=${startDate}&end=${endDate}`);
-    return response.data.data;
+    const response = await apiClient.get<DailyReport[]>(`/report?start=${startDate}&end=${endDate}`);
+    return response.data;
   },
 };
 
-// Auth API
+// Auth API (you may need to create this in .NET)
 export const authApi = {
   validatePin: async (pin: string): Promise<{ valid: boolean; name: string; role: string }> => {
-    const response = await apiClient.post<ApiResponse<{ valid: boolean; name: string; role: string }>>('/auth/validate', { pin });
-    return response.data.data;
+    const response = await apiClient.post<{ valid: boolean; name: string; role: string }>('/auth/validate', { pin });
+    return response.data;
   },
 };
 

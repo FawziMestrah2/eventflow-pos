@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import type { CartItem, Product, Staff } from '@/types';
+import type { CartItem, ProductView, Staff } from '@/types';
 
 interface CartStore {
   items: CartItem[];
-  addItem: (product: Product) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addItem: (product: ProductView) => void;
+  removeItem: (productId: number) => void;
+  updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
   getTotal: () => number;
   getItemCount: () => number;
@@ -14,7 +14,7 @@ interface CartStore {
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
 
-  addItem: (product: Product) => {
+  addItem: (product: ProductView) => {
     set((state) => {
       const existingItem = state.items.find((item) => item.product.id === product.id);
       if (existingItem) {
@@ -30,13 +30,13 @@ export const useCartStore = create<CartStore>((set, get) => ({
     });
   },
 
-  removeItem: (productId: string) => {
+  removeItem: (productId: number) => {
     set((state) => ({
       items: state.items.filter((item) => item.product.id !== productId),
     }));
   },
 
-  updateQuantity: (productId: string, quantity: number) => {
+  updateQuantity: (productId: number, quantity: number) => {
     if (quantity <= 0) {
       get().removeItem(productId);
       return;
@@ -52,7 +52,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   getTotal: () => {
     return get().items.reduce(
-      (total, item) => total + item.product.price * item.quantity,
+      (total, item) => total + (item.product.retailPrice || 0) * item.quantity,
       0
     );
   },
