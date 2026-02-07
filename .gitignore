@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 public/
+src/assets/PrintLogo.png
 
 # Editor directories and files
 .vscode/*
