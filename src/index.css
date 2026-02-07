@@ -133,8 +133,8 @@
 @media print {
   /* Remove browser header/footer */
   @page {
-    margin: 0;
-    size: 80mm auto;
+    margin: 10mm;
+    size: A4;
   }
 
   /* Hide everything except receipt */
@@ -154,13 +154,15 @@
 
   .print-receipt {
     position: absolute;
-    left: 0;
-    top: 0;
-    width: 80mm;
-    padding: 5mm;
+    left: 50%;
+    top: 20mm;
+    transform: translateX(-50%);
+    width: 120mm;
+    padding: 10mm;
     margin: 0;
     background: white !important;
     color: black !important;
+    font-size: 14pt;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -169,7 +171,32 @@
   .print-receipt p,
   .print-receipt span,
   .print-receipt h3,
-  .print-receipt div {
+  .print-receipt div,
+  .print-receipt td,
+  .print-receipt th {
     color: black !important;
+    font-weight: 600 !important;
+  }
+
+  .print-receipt .font-bold,
+  .print-receipt h3,
+  .print-receipt th {
+    font-weight: 800 !important;
+  }
+
+  /* Larger logo for print */
+  .print-receipt img {
+    visibility: visible !important;
+    display: block !important;
+    width: 30mm !important;
+    height: 30mm !important;
+    margin: 0 auto 5mm auto !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Larger text for print */
+  .print-receipt table {
+    font-size: 12pt;
   }
 }

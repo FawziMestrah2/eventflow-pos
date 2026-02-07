@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import type { SaleView } from '@/types';
 import { formatPrice, formatPriceLBP, formatDateTime } from '@/lib/constants';
 import { Printer, Check, PartyPopper } from 'lucide-react';
+import printLogo from '@/assets/PrintLogo.png';
 
 interface ReceiptProps {
   sale: SaleView;
@@ -38,9 +39,9 @@ const Receipt = ({ sale, onClose, onPrint }: ReceiptProps) => {
             <div className="text-center mb-4">
               {/* <PartyPopper className="h-8 w-8 mx-auto mb-2 text-primary" /> */}
               <img
-                src="/PrintLogo.png"
+                src={printLogo}
                 alt="Logo"
-                className="h-16 w-16 mx-auto mb-2 object-contain"
+                className="h-24 w-24 mx-auto mb-3 object-contain block"
               />
 
               {/* <h3 className="font-bold text-lg">الاحتفال </h3> */}
@@ -62,25 +63,16 @@ const Receipt = ({ sale, onClose, onPrint }: ReceiptProps) => {
 
             <Separator className="my-3" />
 
-            {/* Items Table */}
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-center py-1 w-12 pr-4">Qty</th>
-                  <th className="text-left py-1 pl-4">Item</th>
-                  <th className="text-right py-1">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sale.items?.map((item) => (
-                  <tr key={item.id}>
-                    <td className="py-1 text-center pr-4">{item.quantity}</td>
-                    <td className="py-1 pl-4">{item.productName || `Product #${item.productId}`}</td>
-                    <td className="py-1 text-right">{formatPrice(item.totalPrice)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="space-y-2">
+              {sale.items?.map((item) => (
+                <div key={item.id} className="flex justify-between text-sm">
+                  <span>
+                    {item.quantity}x {item.productName || `Product #${item.productId}`}
+                  </span>
+                  <span>{formatPrice(item.totalPrice)}</span>
+                </div>
+              ))}
+            </div>
 
             <Separator className="my-3" />
 

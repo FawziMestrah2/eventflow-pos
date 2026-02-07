@@ -69,6 +69,8 @@ export interface SalesItem {
 
 export interface SalesItemView extends SalesItem {
   productName?: string;
+  categoryId?: number;
+  categoryName?: string;
 }
 
 // Checkout request (matches BOL DTO)
