@@ -12,7 +12,7 @@ import type {
 } from '@/types';
 
 // Configure your API base URL here - point to your .NET API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:7117/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://161.97.142.85:85/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
