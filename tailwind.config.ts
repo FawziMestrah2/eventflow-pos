@@ -47,6 +47,25 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        kermesse: {
+          orange: "hsl(var(--kermesse-orange))",
+          yellow: "hsl(var(--kermesse-yellow))",
+          pink: "hsl(var(--kermesse-pink))",
+          teal: "hsl(var(--kermesse-teal))",
+          coral: "hsl(var(--kermesse-coral))",
+          lime: "hsl(var(--kermesse-lime))",
+        },
+        category: {
+          tickets: "hsl(var(--category-tickets))",
+          food: "hsl(var(--category-food))",
+          drinks: "hsl(var(--category-drinks))",
+          games: "hsl(var(--category-games))",
+          services: "hsl(var(--category-services))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -65,25 +84,27 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "bounce-subtle": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" },
+        },
+        "scale-in": {
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "bounce-subtle": "bounce-subtle 0.3s ease-in-out",
+        "scale-in": "scale-in 0.2s ease-out",
       },
     },
   },
