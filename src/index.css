@@ -129,18 +129,26 @@
   }
 }
 
-/* Print styles for receipts */
+/* Print styles for Xprinter 80mm thermal receipt */
 @media print {
-  /* Remove browser header/footer */
   @page {
-    margin: 10mm;
-    size: A4;
+    margin: 0;
+    size: 80mm auto;
   }
 
-  /* Hide everything except receipt */
+  /* Force page to 80mm so browser doesn't scale from screen width */
+  html {
+    width: 80mm !important;
+    overflow: hidden !important;
+  }
+
   body {
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 80mm !important;
+    min-width: 0 !important;
+    max-width: 80mm !important;
+    overflow: hidden !important;
   }
 
   body * {
@@ -153,50 +161,86 @@
   }
 
   .print-receipt {
-    position: absolute;
-    left: 50%;
-    top: 20mm;
-    transform: translateX(-50%);
-    width: 120mm;
-    padding: 10mm;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    padding: 1mm 4mm;
     margin: 0;
     background: white !important;
     color: black !important;
-    font-size: 14pt;
+    font-size: 11pt;
+    font-family: Arial, sans-serif;
+    line-height: 1.3;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  /* Ensure text is readable in print */
+  /* Text styles */
   .print-receipt p,
   .print-receipt span,
-  .print-receipt h3,
-  .print-receipt div,
-  .print-receipt td,
-  .print-receipt th {
+  .print-receipt div {
     color: black !important;
+    font-size: 11pt !important;
     font-weight: 600 !important;
   }
 
   .print-receipt .font-bold,
   .print-receipt h3,
   .print-receipt th {
-    font-weight: 800 !important;
+    font-weight: 900 !important;
+    font-size: 12pt !important;
   }
 
-  /* Larger logo for print */
+  /* TOTAL line */
+  .print-receipt .text-lg {
+    font-size: 14pt !important;
+    font-weight: 900 !important;
+  }
+
+  /* Logo */
   .print-receipt img {
     visibility: visible !important;
     display: block !important;
-    width: 30mm !important;
-    height: 30mm !important;
-    margin: 0 auto 5mm auto !important;
+    width: 22mm !important;
+    height: 22mm !important;
+    margin: 0 auto 2mm auto !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Larger text for print */
-  .print-receipt table {
-    font-size: 12pt;
+  /* Separator lines */
+  .print-receipt hr,
+  .print-receipt [data-slot="separator"] {
+    border: none !important;
+    border-top: 1px dashed black !important;
+    margin: 2mm 0 !important;
+  }
+
+  /* Compact spacing */
+  .print-receipt .mb-3,
+  .print-receipt .mb-4 {
+    margin-bottom: 2mm !important;
+  }
+
+  .print-receipt .my-3 {
+    margin-top: 2mm !important;
+    margin-bottom: 2mm !important;
+  }
+
+  .print-receipt .mt-4 {
+    margin-top: 2mm !important;
+  }
+
+  .print-receipt .space-y-1 > * + * {
+    margin-top: 1mm !important;
+  }
+
+  .print-receipt .space-y-2 > * + * {
+    margin-top: 1.5mm !important;
+  }
+
+  .print-receipt .p-4 {
+    padding: 1mm !important;
   }
 }

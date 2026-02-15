@@ -10,49 +10,49 @@ import {
 
 // Currency configuration
 export const currencies = {
-  USD: {
-    code: 'USD',
-    symbol: '$',
-    name: 'US Dollar',
-    rate: 1, // Base currency
-  },
   LBP: {
     code: 'LBP',
     symbol: 'L.L.',
     name: 'Lebanese Pound',
+    rate: 1, // Base currency
+  },
+  USD: {
+    code: 'USD',
+    symbol: '$',
+    name: 'US Dollar',
     rate: 90000, // 1 USD = 90,000 LBP
   },
 } as const;
 
 export type CurrencyCode = keyof typeof currencies;
 
-// Format price in USD
+// Format price in LBP (base currency)
 export const formatPrice = (price?: number | null): string => {
-  return `$${(price || 0).toFixed(2)}`;
+  return `${(price || 0).toLocaleString('en-US')} L.L.`;
 };
 
-// Format price in LBP
+// Format price in USD (secondary currency)
 export const formatPriceLBP = (price?: number | null): string => {
-  const lbpAmount = (price || 0) * currencies.LBP.rate;
-  return `${lbpAmount.toLocaleString('en-US')} L.L.`;
+  const usdAmount = (price || 0) / currencies.USD.rate;
+  return `$${usdAmount.toFixed(2)}`;
 };
 
 // Format price in both currencies
-export const formatPriceDual = (price?: number | null): { usd: string; lbp: string } => {
+export const formatPriceDual = (price?: number | null): { lbp: string; usd: string } => {
   return {
-    usd: formatPrice(price),
-    lbp: formatPriceLBP(price),
+    lbp: formatPrice(price),
+    usd: formatPriceLBP(price),
   };
-};
-
-// Convert USD to LBP
-export const usdToLbp = (usd: number): number => {
-  return usd * currencies.LBP.rate;
 };
 
 // Convert LBP to USD
 export const lbpToUsd = (lbp: number): number => {
-  return lbp / currencies.LBP.rate;
+  return lbp / currencies.USD.rate;
+};
+
+// Convert USD to LBP
+export const usdToLbp = (usd: number): number => {
+  return usd * currencies.USD.rate;
 };
 
 // Category styling config - maps category names (case-insensitive) to styles
